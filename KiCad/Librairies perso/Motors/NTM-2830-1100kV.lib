@@ -1,0 +1,19 @@
+EESchema-LIBRARY Version 2.3
+#encoding utf-8
+#
+# Moteur_NTM-2830_1100kv
+#
+DEF Moteur_NTM-2830_1100kv M 0 40 Y Y 1 F N
+F0 "M" 0 0 60 H V C CNN
+F1 "Moteur_NTM-2830_1100kv" 0 400 60 H V C CNN
+F2 "" 0 0 60 H V C CNN
+F3 "" 0 0 60 H V C CNN
+DRAW
+C 0 0 304 0 1 0 N
+X MOT 1 450 150 185 L 50 35 1 1 I
+X MOT 2 500 0 197 L 50 35 1 1 I
+X MOT 3 450 -150 185 L 50 35 1 1 I
+ENDDRAW
+ENDDEF
+#
+#End Library
