@@ -1,0 +1,3 @@
+(fp_lib_table
+  (lib (name drone-custom)(type KiCad)(uri "$(KIPRJMOD)\\drone-custom.pretty")(options "")(descr ""))
+)

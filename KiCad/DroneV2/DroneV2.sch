@@ -1,4 +1,5 @@
 EESchema Schematic File Version 2
+LIBS:DroneV2-rescue
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -32,7 +33,6 @@ LIBS:arduino_micro_shield
 LIBS:gy-80
 LIBS:esc_afro_30a
 LIBS:Turnigy_8CH_Rx
-LIBS:DroneV2_Cache
 LIBS:DroneV2-cache
 EELAYER 25 0
 EELAYER END
@@ -49,12 +49,12 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L ARDUINO_MICRO_SHIELD U2
+L ARDUINO_MICRO_SHIELD-RESCUE-DroneV2 U2
 U 1 1 56DF1795
 P 5525 4200
 F 0 "U2" V 6450 4200 60  0000 C CNN
 F 1 "ARDUINO_MICRO_SHIELD" V 4575 4200 60  0000 C CNN
-F 2 "arduino_micro_shield:ARDUINO_MICRO_SHIELD" H 5925 4150 60  0001 C CNN
+F 2 "drone-custom:ARDUINO_MICRO_SHIELD_custom" H 5925 4150 60  0001 C CNN
 F 3 "" H 5925 4150 60  0000 C CNN
 	1    5525 4200
 	0    1    1    0   
@@ -65,7 +65,7 @@ U 1 1 56DF1AF9
 P 3225 2400
 F 0 "U1" H 3225 3000 60  0000 C CNN
 F 1 "GY-80" H 3225 1775 60  0000 C CNN
-F 2 "GY-80:GY-80-Footprint" H 3025 2900 60  0001 C CNN
+F 2 "drone-custom:GY-80-Footprint_wider_pad" H 3025 2900 60  0001 C CNN
 F 3 "" H 3025 2900 60  0000 C CNN
 	1    3225 2400
 	1    0    0    1   
@@ -76,7 +76,7 @@ U 1 1 56DF1DA7
 P 7775 3800
 F 0 "ESC1" H 7475 3800 60  0000 C CNN
 F 1 "ESC_Connecor" H 8350 3800 60  0000 C CNN
-F 2 "Pin_Headers:Pin_Header_Straight_1x03" H 7775 3800 60  0001 C CNN
+F 2 "drone-custom:Pin_Header_Straight_1x03_custom" H 7775 3800 60  0001 C CNN
 F 3 "" H 7775 3800 60  0000 C CNN
 	1    7775 3800
 	1    0    0    -1  
@@ -87,7 +87,7 @@ U 1 1 56DF1E63
 P 7775 4350
 F 0 "ESC2" H 7475 4350 60  0000 C CNN
 F 1 "ESC_Connecor" H 8350 4350 60  0000 C CNN
-F 2 "Pin_Headers:Pin_Header_Straight_1x03" H 7775 4350 60  0001 C CNN
+F 2 "drone-custom:Pin_Header_Straight_1x03_custom" H 7775 4350 60  0001 C CNN
 F 3 "" H 7775 4350 60  0000 C CNN
 	1    7775 4350
 	1    0    0    -1  
@@ -98,7 +98,7 @@ U 1 1 56DF1EA7
 P 7775 4900
 F 0 "ESC3" H 7475 4900 60  0000 C CNN
 F 1 "ESC_Connecor" H 8350 4900 60  0000 C CNN
-F 2 "Pin_Headers:Pin_Header_Straight_1x03" H 7775 4900 60  0001 C CNN
+F 2 "drone-custom:Pin_Header_Straight_1x03_custom" H 7775 4900 60  0001 C CNN
 F 3 "" H 7775 4900 60  0000 C CNN
 	1    7775 4900
 	1    0    0    -1  
@@ -109,7 +109,7 @@ U 1 1 56DF1EF0
 P 7775 5450
 F 0 "ESC4" H 7475 5450 60  0000 C CNN
 F 1 "ESC_Connecor" H 8350 5450 60  0000 C CNN
-F 2 "Pin_Headers:Pin_Header_Straight_1x03" H 7775 5450 60  0001 C CNN
+F 2 "drone-custom:Pin_Header_Straight_1x03_custom" H 7775 5450 60  0001 C CNN
 F 3 "" H 7775 5450 60  0000 C CNN
 	1    7775 5450
 	1    0    0    -1  
@@ -120,7 +120,7 @@ U 1 1 56DF2096
 P 7175 2275
 F 0 "U3" H 6975 2475 50  0000 C CNN
 F 1 "LM7809CT" H 7175 2475 50  0000 L CNN
-F 2 "TO_SOT_Packages_THT:TO-220_Neutral123_Vertical" H 7175 2375 50  0001 C CIN
+F 2 "drone-custom:TO-220_Neutral123_Vertical_custom" H 7175 2375 50  0001 C CIN
 F 3 "" H 7175 2275 50  0000 C CNN
 	1    7175 2275
 	-1   0    0    -1  
@@ -131,7 +131,7 @@ U 1 1 56DF22BB
 P 3200 3800
 F 0 "CH1" H 3450 3800 60  0000 C CNN
 F 1 "Rx_Pin" H 2900 3800 60  0000 C CNN
-F 2 "Pin_Headers:Pin_Header_Straight_1x03" H 3200 3800 60  0001 C CNN
+F 2 "drone-custom:Pin_Header_Straight_1x03_custom" H 3200 3800 60  0001 C CNN
 F 3 "" H 3200 3800 60  0000 C CNN
 	1    3200 3800
 	1    0    0    -1  
@@ -142,7 +142,7 @@ U 1 1 56DF230E
 P 3200 4350
 F 0 "CH2" H 3450 4350 60  0000 C CNN
 F 1 "Rx_Pin" H 2900 4350 60  0000 C CNN
-F 2 "Pin_Headers:Pin_Header_Straight_1x03" H 3200 4350 60  0001 C CNN
+F 2 "drone-custom:Pin_Header_Straight_1x03_custom" H 3200 4350 60  0001 C CNN
 F 3 "" H 3200 4350 60  0000 C CNN
 	1    3200 4350
 	1    0    0    -1  
@@ -153,7 +153,7 @@ U 1 1 56DF23AF
 P 3200 4900
 F 0 "CH3" H 3450 4900 60  0000 C CNN
 F 1 "Rx_Pin" H 2900 4900 60  0000 C CNN
-F 2 "Pin_Headers:Pin_Header_Straight_1x03" H 3200 4900 60  0001 C CNN
+F 2 "drone-custom:Pin_Header_Straight_1x03_custom" H 3200 4900 60  0001 C CNN
 F 3 "" H 3200 4900 60  0000 C CNN
 	1    3200 4900
 	1    0    0    -1  
@@ -164,7 +164,7 @@ U 1 1 56DF240D
 P 3200 5450
 F 0 "CH4" H 3450 5450 60  0000 C CNN
 F 1 "Rx_Pin" H 2900 5450 60  0000 C CNN
-F 2 "Pin_Headers:Pin_Header_Straight_1x03" H 3200 5450 60  0001 C CNN
+F 2 "drone-custom:Pin_Header_Straight_1x03_custom" H 3200 5450 60  0001 C CNN
 F 3 "" H 3200 5450 60  0000 C CNN
 	1    3200 5450
 	1    0    0    -1  
@@ -329,7 +329,7 @@ U 1 1 56DF4201
 P 6725 2375
 F 0 "C1" H 6750 2475 50  0000 L CNN
 F 1 "C" H 6750 2275 50  0000 L CNN
-F 2 "Capacitors_ThroughHole:C_Rect_L7_W2_P5" H 6763 2225 50  0001 C CNN
+F 2 "drone-custom:C_Rect_L7_W2_P5_custom" H 6763 2225 50  0001 C CNN
 F 3 "" H 6725 2375 50  0000 C CNN
 	1    6725 2375
 	1    0    0    -1  
@@ -340,7 +340,7 @@ U 1 1 56DF429E
 P 7625 2375
 F 0 "C2" H 7650 2475 50  0000 L CNN
 F 1 "C" H 7650 2275 50  0000 L CNN
-F 2 "Capacitors_ThroughHole:C_Rect_L7_W2_P5" H 7663 2225 50  0001 C CNN
+F 2 "drone-custom:C_Rect_L7_W2_P5_custom" H 7663 2225 50  0001 C CNN
 F 3 "" H 7625 2375 50  0000 C CNN
 	1    7625 2375
 	1    0    0    -1  
@@ -361,7 +361,7 @@ U 1 1 56DF4514
 P 8375 2375
 F 0 "U4" H 8375 1975 60  0000 C CNN
 F 1 "Battery_Connector" H 8375 2725 60  0000 C CNN
-F 2 "Pin_Headers:Pin_Header_Angled_1x03" H 8375 2375 60  0001 C CNN
+F 2 "drone-custom:Pin_Header_Angled_1x03_custom" H 8375 2375 60  0001 C CNN
 F 3 "" H 8375 2375 60  0000 C CNN
 	1    8375 2375
 	1    0    0    -1  
@@ -434,7 +434,7 @@ U 1 1 56DF25BE
 P 4275 3275
 F 0 "BUZ1" H 4275 2975 60  0000 C CNN
 F 1 "Buzzer" H 4275 3225 60  0000 C CNN
-F 2 "Buzzers_Beepers:MagneticBuzzer_StarMicronics_HMB-06_HMB-12" H 4275 3275 60  0001 C CNN
+F 2 "drone-custom:MagneticBuzzer_StarMicronics_HMB-06_HMB-12_custom" H 4275 3275 60  0001 C CNN
 F 3 "" H 4275 3275 60  0000 C CNN
 	1    4275 3275
 	1    0    0    1   
