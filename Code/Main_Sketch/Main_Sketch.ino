@@ -34,13 +34,14 @@
 #define PIN_ESC_ARG A2
 #define PIN_BUZZER 4
 
+#define MICROS_LOW 1050
+#define MICROS_HIGH 1900
+#define MICROS_RUNNING MICROS_LOW + 20
+
 
 void setup();
 void loop();
-void timing_roll();
-void timing_pitch();
-void timing_throttle();
-void timing_yaw();
+
 void receiver_to_value();
 void read_gy80();
 void calculate_power();
@@ -131,12 +132,8 @@ float D_x = 0, D_y = 0, D_z = 0;
 
 int indice = 0;
 
-volatile unsigned long int first_micros_ch[4] = {0, 0, 0, 0};
-volatile unsigned short int time_ch[4] = {0, 0, 0, 0};
-
 unsigned short int power_AVG = 0, power_AVD = 0, power_ARD = 0, power_ARG = 0;
 
-Servo ESC_AVG, ESC_AVD, ESC_ARD, ESC_ARG;
 sensors_event_t val_accel, val_gyro, val_compass;
 
 Adafruit_ADXL345_Unified accelerometre = Adafruit_ADXL345_Unified(1);//12345 remplace par 00345
@@ -151,12 +148,6 @@ void setup() {
   Serial.begin(9600);
   while (!Serial) ;
 
-  pinMode(ROLL_PIN, INPUT);
-  pinMode(PITCH_PIN, INPUT);
-  pinMode(THROTTLE_PIN, INPUT);
-  pinMode(YAW_PIN, INPUT);
-  pinMode(PIN_BUZZER, OUTPUT);
-
   //On vérifie que les capteurs on été correctement connectée.
   if (!gyroscope.begin(GYRO_RANGE_250DPS)) {
     while(true){}
@@ -170,16 +161,6 @@ void setup() {
     while(true){}
   }
 #endif
-
-  attachPinChangeInterrupt(digitalPinToPinChangeInterrupt(THROTTLE_PIN), timing_throttle, CHANGE);
-  attachPinChangeInterrupt(digitalPinToPinChangeInterrupt(YAW_PIN), timing_yaw, CHANGE);
-  attachPinChangeInterrupt(digitalPinToPinChangeInterrupt(ROLL_PIN), timing_roll, CHANGE);
-  attachPinChangeInterrupt(digitalPinToPinChangeInterrupt(PITCH_PIN), timing_pitch, CHANGE);
-
-  ESC_ARG.attach(PIN_ESC_ARG, 1050, 1900);
-  ESC_ARD.attach(PIN_ESC_ARD, 1050, 1900);
-  ESC_AVD.attach(PIN_ESC_AVD, 1050, 1900);
-  ESC_AVG.attach(PIN_ESC_AVG, 1050, 1900);
 
   //définition des echelles des capteurs
   buzzer(1);
@@ -206,10 +187,21 @@ void setup() {
       counter = 0;  
     }
   }
+
+  
   buzzer(3);
   roll_angle = 0;
   pitch_angle = 0;
   yaw_angle = 0;
+
+  //NEW CODE
+  Motor MotorAVG = new Motor(PIN_ESC_AVG, MICROS_LOW, MICROS_HIGH);
+  Motor MotorAVD = new Motor(PIN_ESC_AVD, MICROS_LOW, MICROS_HIGH);
+  Motor MotorARD = new Motor(PIN_ESC_ARD, MICROS_LOW, MICROS_HIGH);
+  Motor MotorARG = new Motor(PIN_ESC_ARG, MICROS_LOW, MICROS_HIGH);
+
+  Receiver receiver(ROLL_PIN, PITCH_PIN, THROTTLE_PIN, YAW_PIN);
+
 }
 
 
@@ -296,9 +288,6 @@ void loop() {
 void stand_still() {
   power_AVG = power_AVD = power_ARD = power_ARG = 1000;
   I_x = I_y = I_z = 0;
-
-
-
 }
 
 
@@ -544,38 +533,6 @@ void calibrate_compass(const float time_seconds) {
     cal.compass.scale.z = field / (max_z);*/
 }
 #endif
-
-
-void timing_roll() {
-  if (digitalRead(ROLL_PIN))
-    first_micros_ch[N_ROLL] = micros();
-  else
-    time_ch[N_ROLL] = micros() - first_micros_ch[N_ROLL];
-}
-
-
-void timing_pitch() {
-  if (digitalRead(PITCH_PIN))
-    first_micros_ch[N_PITCH] = micros();
-  else
-    time_ch[N_PITCH] = micros() - first_micros_ch[N_PITCH];
-}
-
-
-void timing_throttle() {
-  if (digitalRead(THROTTLE_PIN))
-    first_micros_ch[N_THROTTLE] = micros();
-  else
-    time_ch[N_THROTTLE] = micros() - first_micros_ch[N_THROTTLE];
-}
-
-
-void timing_yaw() {
-  if (digitalRead(YAW_PIN))
-    first_micros_ch[N_YAW] = micros();
-  else
-    time_ch[N_YAW] = micros() - first_micros_ch[N_YAW];
-}
 
 
 void buzzer(int number){
