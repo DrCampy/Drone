@@ -58,47 +58,6 @@ Madgwick AHRS_filter;
 unsigned long tSample = 1000000/50; //50Hz sampling rate
 unsigned long microsPrevious = 0;
 
-void setup();
-void loop();
-
-void receiver_to_value();
-void read_gy80();
-void calculate_power();
-void send_signal();
-void pid();
-float map_float(double x, double in_min, double in_max, double out_min, double out_max);
-
-
-/*to be implemented
-  zero_when_zero()
-  fonction pour armer les moteurs (throttle = 0 et rot autour axe z = -180)
-*/
-
-//used for integration
-float dt_gy80 = 0, dt_pid = 0;
-unsigned long int timer_pid = 0,  timer_gy80 = 0;
-
-int value_throttle = 0; //valeur des gaz (envoyée par la radio)
-float value_roll = 0, value_pitch = 0, value_yaw = 0; //valeurs envoyées par la radio
-
-/****************************************************************************************************/
-/*                                     Variables du PID                                             */
-/****************************************************************************************************/
-
-
-float X_sum = 0, Y_sum = 0, Z_sum = 0;//sommes des différents elements du PID
-
-
-//Valeurs des gains pour le PID
-float k_P_xy = 2, k_I_xy = 1, k_D_xy = 1;
-float k_P_z = 2, k_I_z = 1, k_D_z = 1;
-
-float P_x = 0, P_y = 0, P_z = 0;
-float I_x = 0, I_y = 0, I_z = 0;
-float D_x = 0, D_y = 0, D_z = 0;
-
-unsigned short int power_AVG = 0, power_AVD = 0, power_ARD = 0, power_ARG = 0;
-
 void setup() {
 
   Serial.begin(9600);
@@ -175,6 +134,8 @@ void loop() {
 		roll = filter.getRoll();
 		pitch = filter.getPitch();
 		yaw = filter.getYaw();
+		
+		
 	}
 	
   receiver_to_value();
@@ -189,55 +150,6 @@ void loop() {
   }
   
   send_signal();
-/*
-  if (indice == 200) {
-
-    Serial.println("Angles (gyro): ");
-    Serial.print("Roll_angle:  "); Serial.print(roll_angle); Serial.print("  ");
-    Serial.print("Pitch_angle: "); Serial.print(pitch_angle); Serial.print("  ");
-    Serial.print("yaw_angle:   "); Serial.print(yaw_angle); Serial.print("  "); Serial.println("deg");
-
-    Serial.println("Angles (accelerometre): ");
-    Serial.print("Roll_a:  "); Serial.print(roll_a); Serial.print("  ");
-    Serial.print("Pitch_a: "); Serial.print(pitch_a); Serial.print("  "); Serial.println("deg");
-
-    Serial.print("Value throttle");Serial.println(value_throttle);
-    Serial.print("Value Roll");Serial.println(value_roll);
-    Serial.print("Value Pitch");Serial.println(value_pitch);
-    Serial.print("Value Yaw");Serial.println(value_yaw);
-
-    Serial.print("X_Sum: ");Serial.println(X_sum);
-    Serial.print("Y_Sum: ");Serial.println(Y_sum);
-    Serial.print("Z_Sum: ");Serial.println(Z_sum);
-    
-    /*
-      Serial.print("Micros sur Channel 1: ");
-      Serial.println(time_ch[N_ROLL]);
-      Serial.print("Micros sur Channel 2: ");
-      Serial.println(time_ch[N_PITCH]);
-      Serial.print("Micros sur Channel 3: ");
-      Serial.println(time_ch[N_THROTTLE]);
-      Serial.print("Micros sur Channel 4: ");
-      Serial.println(time_ch[N_YAW]);
-    */
-/*
-    Serial.print("Signal to AVG: ");
-    Serial.println(power_AVG);
-    Serial.print("Signal to AVD: ");
-    Serial.println(power_AVD);
-    Serial.print("Signal to ARD: ");
-    Serial.println(power_ARD);
-    Serial.print("Signal to ARG: ");
-    Serial.println(power_ARG);
-
-#ifdef USE_COMPASS
-    Serial.print("Compass_heading: "); Serial.println(var_compass);
-#endif
-
-
-    Serial.println("-----------------------------------------------------------------------------");
-  }*/
-  //indice = (indice + 1) % 201;
 }
 
 
@@ -245,74 +157,6 @@ void stand_still() {
   power_AVG = power_AVD = power_ARD = power_ARG = 1000;
   I_x = I_y = I_z = 0;
 }
-
-
-void read_gy80() {
-
-  //double  atan2 (double __y, double __x)  // arc tangent of y/x
-
-  float k = 0.95;
-
-  accelerometre.getEvent(&val_accel);
-  val_accel.acceleration.x -= cal.accel.offset.x;
-  val_accel.acceleration.y -= cal.accel.offset.y;
-  val_accel.acceleration.z -= cal.accel.offset.z;
-
-  accel.x = val_accel.acceleration.x * alpha + ( accel.x * (1.0 - alpha));
-  accel.y = val_accel.acceleration.y * alpha + ( accel.y * (1.0 - alpha));
-  accel.z = val_accel.acceleration.z * alpha + ( accel.z * (1.0 - alpha));
-
-  /******************************************************************************/
-  /* Ce bloc sert à transformer les données de l'accéléromètre (en g par axe)   */
-  /* en un angle par inclinaison (pitch/roll) decrivant sa position!            */
-  /******************************************************************************/
-  roll_a = ((atan2(-accel.y, accel.z) * 180.0) / M_PI); //accelero
-  pitch_a = ((atan2(accel.x, sqrt(accel.y * accel.y + accel.z * accel.z)) * 180.0) / M_PI); //accelero
-
-
-
-
-#ifdef USE_COMPASS
-  if ((micros() - last_sample) > (1 / 30) / 1000000) {
-    last_sample = micros();
-    //scale * (data-offset)
-    compass.getEvent(&val_compass);
-    val_compass.magnetic.x = cal.compass.scale.x * (val_compass.magnetic.x - cal.compass.offset.x);
-    val_compass.magnetic.y = cal.compass.scale.y * (val_compass.magnetic.y - cal.compass.offset.y);
-    val_compass.magnetic.z = cal.compass.scale.z * (val_compass.magnetic.z - cal.compass.offset.z);
-
-    float xh = val_compass.magnetic.x * cos(pitch_angle) + val_compass.magnetic.y * sin(pitch_angle) * sin(roll_angle) - val_compass.magnetic.z * cos(roll_angle) * sin(pitch_angle);
-    float yh = val_compass.magnetic.y * cos(roll_angle) + val_compass.magnetic.z * sin(roll_angle);
-
-    if (yh > 0.1) {
-      var_compass = 90 - atan2((float)xh, (float)yh) * (180 / PI); // angle in degrees
-    } else if (yh < -0.1) {
-      var_compass = 270 - atan2((float)xh, (float)yh) * (180 / PI);
-    } else {
-      if (xh < 0) {
-        var_compass = 180;
-      } else if (xh > 0) {
-        var_compass = 0;
-      }
-    }
-
-    var_compass = fmod(var_compass, 360);
-  }
-#endif
-
-  gyroscope.getEvent(&val_gyro);
-  dt_gy80 = ((float)(micros() - timer_gy80) / 1000000);
-  val_gyro.gyro.x -= cal.gyro.drift.roll;
-  val_gyro.gyro.y -= cal.gyro.drift.pitch;
-  val_gyro.gyro.z -= cal.gyro.drift.yaw;
-
-  //Complementary filter
-  roll_angle = k * (roll_angle + val_gyro.gyro.x * dt_gy80) + (1 - k) * roll_a;
-  pitch_angle = k * (pitch_angle + val_gyro.gyro.y * dt_gy80) + (1 - k) * pitch_a;
-  yaw_angle = yaw_angle + val_gyro.gyro.z * dt_gy80;
-  timer_gy80 = micros();
-}
-
 
 void receiver_to_value() {
   //short unsigned int tmp = 0;
@@ -326,17 +170,17 @@ void receiver_to_value() {
 
   tmp = time_ch[N_ROLL];
   if (tmp < 1460)
-    value_roll = map_float(tmp, 1050, 1460, -45, 0);
+    value_roll = map_float(tmp, 1050, 1460, -25, 0);
   else if (tmp > 1490)
-    value_roll = map_float(tmp, 1490, 1900, 0, 45);
+    value_roll = map_float(tmp, 1490, 1900, 0, 25);
   else
     value_roll = 0; //deg
 
   tmp = time_ch[N_PITCH];
   if (tmp < 1460)
-    value_pitch = map_float(tmp, 1050, 1460, -45, 0);
+    value_pitch = map_float(tmp, 1050, 1460, -25, 0);
   else if (tmp > 1490)
-    value_pitch = map_float(tmp, 1490, 1900, 0, 45);
+    value_pitch = map_float(tmp, 1490, 1900, 0, 25);
   else
     value_pitch = 0; //deg
 
@@ -361,63 +205,6 @@ void calculate_power() { //VIDE
   power_ARD = constrain(power_ARD, 1100, 1900);
   power_ARG = constrain(power_ARG, 1100, 1900);
 }
-
-
-void pid() { // VIDE
-  float roll_error = (value_roll - roll_angle);
-  float pitch_error = (value_pitch - pitch_angle );
-  float yaw_error = (value_yaw - yaw_angle  );
-
-  dt_pid = ((float)(micros() - timer_pid) / 1000000);
-
-  //Serial.print("Angles: (roll yaw pitch): "); Serial.print(roll_angle);Serial.print(yaw_angle);Serial.println(pitch_angle);
-  //Serial.print("Values (throttle roll yaw pitch): "); Serial.print(value_throttle);Serial.print(value_roll); Serial.print(value_yaw); Serial.println(value_pitch);
-
-  P_x = roll_error * k_P_xy; //roll value_roll; == rad_tilt LR
-  I_x = I_x + (roll_error * dt_pid * k_I_xy);
-  D_x = (roll_error - previous_roll_error) * (k_D_xy / dt_pid);
-
-  P_y = pitch_error * k_P_xy; //pitch value_pitch; == rad_tilt TB
-  I_y = I_y + (pitch_error * dt_pid * k_I_xy);
-  D_y = (pitch_error - previous_pitch_error) * (k_D_xy / dt_pid);
-
-  P_z = yaw_error * k_P_z;
-  I_z = I_z + ( yaw_error * dt_pid * k_I_z);
-  D_z = (yaw_error - previous_yaw_error) * (k_D_z / dt_pid);
-
-  timer_pid = micros();
-
-  if(I_x > 35)
-    I_x = 35;
-  if(I_x <-35)
-    I_x = -35;
-    
-  if(I_y > 35)
-    I_y = 35;
-  if(I_y <-35)
-    I_y = -35;
-    
-  if(I_z > 35)
-    I_z = 35;
-  if(I_z <-35)
-    I_z = -35;  
-  previous_roll_error = roll_error;
-  previous_pitch_error = pitch_error;
-  previous_yaw_error = yaw_error;
-
-  X_sum = P_x + I_x + D_x;
-  Y_sum = P_y + I_y + D_y;
-  Z_sum = P_z + I_z + D_z;
-}
-
-
-void send_signal() { // VIDE
-  ESC_AVG.writeMicroseconds(power_AVG);
-  ESC_AVD.writeMicroseconds(power_AVD);
-  ESC_ARD.writeMicroseconds(power_ARD);
-  ESC_ARG.writeMicroseconds(power_ARG);
-}
-
 
 float map_float(double x, double in_min, double in_max, double out_min, double out_max) {
   return (float)(x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
@@ -490,19 +277,4 @@ void calibrate_compass(const float time_seconds) {
 }
 #endif
 
-
-void buzzer(int number){
-  
-  for(int i = 0; i < number; i++){
-    digitalWrite(PIN_BUZZER, HIGH);
-    
-    for(int i = 0; i < 25000; i++){
-      
-    }
-    digitalWrite(PIN_BUZZER, LOW);
-    for(int i = 0; i < 15000; i++){
-    
-    }
-  }
-}
 
