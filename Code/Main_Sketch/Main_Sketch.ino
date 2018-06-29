@@ -6,15 +6,10 @@
 #include <PinChangeInterruptPins.h>
 #include <PinChangeInterruptSettings.h>
 
-#define USE_COMPASS
-
 #include <Adafruit_Sensor.h>
 #include <Adafruit_ADXL345_U.h>
 #include <Adafruit_L3GD20_U.h>
-
-#ifdef USE_COMPASS
 #include <Adafruit_HMC5883_U.h>
-#endif
 
 
 //connexion au recepteur
@@ -38,6 +33,30 @@
 #define MICROS_HIGH 1900
 #define MICROS_RUNNING MICROS_LOW + 20
 
+#define ACCEL_I2C_ADDR 1
+#define MAG_I2C_ADDR 2
+#define GYRO_I2C_ADDR 3
+
+//Variables
+Adafruit_ADXL345_Unified accel(ACCEL_I2C_ADDR);
+Adafruit_HMC5883_Unified mag(MAG_I2C_ADDR);
+Adafruit_L3GD20_Unified gyro(GYRO_I2C_ADDR);
+
+float mx = 0.0F, my = 0.0F, mz = 0.0F;
+float ax = 0.0F, ay = 0.0F, az = 0.0F;
+float gx = 0.0F, gy = 0.0F, gz = 0.0F;
+
+// Offsets applied to raw x/y/z values
+float mag_offsets[3] = { -2.20F, -5.53F, -26.34F };
+
+// Soft iron error compensation matrix
+float mag_softiron_matrix[3][3] = {{ 0.934, 0.005, 0.013 }, { 0.005, 0.948, 0.012 }, { 0.013, 0.012, 1.129 }};
+
+//float mag_field_strength = 48.41F;
+
+Madgwick AHRS_filter;
+unsigned long tSample = 1000000/50; //50Hz sampling rate
+unsigned long microsPrevious = 0;
 
 void setup();
 void loop();
@@ -48,58 +67,12 @@ void calculate_power();
 void send_signal();
 void pid();
 float map_float(double x, double in_min, double in_max, double out_min, double out_max);
-void calibrate_gyroscope(const int);
-#ifdef USE_COMPASS
-void calibrate_compass(const float);
-#endif
-void buzzer(int number);
+
 
 /*to be implemented
   zero_when_zero()
   fonction pour armer les moteurs (throttle = 0 et rot autour axe z = -180)
 */
-
-typedef struct {
-  float x = 0;
-  float y = 0;
-  float z = 0;
-} coordinates;
-
-typedef struct {
-  float roll = 0;
-  float pitch = 0;
-  float yaw = 0;
-} angles;
-
-typedef struct {
-  struct {
-    coordinates scale;
-    coordinates offset;
-  } compass;
-  struct {
-    angles drift;
-  } gyro;
-
-  struct {
-    coordinates offset;
-  } accel;
-} calibration;
-
-calibration cal; //calibration datas of the different captors
-coordinates accel; //raw values of the accel //float accel_x = 0, accel_y = 0, accel_z = 0; //valeurs corrigées de l'accéléromètre (read_gy80)
-coordinates gyro; //raw values of the gyro float X_vel = 0, Y_vel = 0, Z_vel = 0; //valeurs corrigées du gyroscope
-
-int debug = 0;
-
-unsigned long int last_sample = 0; //Pour une bonne frequelce de poll sur le magnetometre
-
-const float alpha = 0.9; //low_pass filter accelerometre
-
-float roll_a = 0, pitch_a = 0; //angles donnés par l'accelerometre
-
-float roll_g = 0, pitch_g = 0, yaw_g = 0;//angles (deg) calculés aptd gyroscope
-
-float yaw_angle = 0, roll_angle = 0, pitch_angle = 0; //read_gy80 output
 
 //used for integration
 float dt_gy80 = 0, dt_pid = 0;
@@ -114,13 +87,7 @@ float value_roll = 0, value_pitch = 0, value_yaw = 0; //valeurs envoyées par la
 
 
 float X_sum = 0, Y_sum = 0, Z_sum = 0;//sommes des différents elements du PID
-float previous_roll_error = 0;
-float previous_pitch_error = 0;
-float previous_yaw_error = 0;
 
-#ifdef USE_COMPASS
-float var_compass = 0; //direction pointee par la boussole
-#endif
 
 //Valeurs des gains pour le PID
 float k_P_xy = 2, k_I_xy = 1, k_D_xy = 1;
@@ -130,18 +97,7 @@ float P_x = 0, P_y = 0, P_z = 0;
 float I_x = 0, I_y = 0, I_z = 0;
 float D_x = 0, D_y = 0, D_z = 0;
 
-int indice = 0;
-
 unsigned short int power_AVG = 0, power_AVD = 0, power_ARD = 0, power_ARG = 0;
-
-sensors_event_t val_accel, val_gyro, val_compass;
-
-Adafruit_ADXL345_Unified accelerometre = Adafruit_ADXL345_Unified(1);//12345 remplace par 00345
-Adafruit_L3GD20_Unified gyroscope = Adafruit_L3GD20_Unified(2);
-
-#ifdef USE_COMPASS
-Adafruit_HMC5883_Unified compass = Adafruit_HMC5883_Unified(3);
-#endif
 
 void setup() {
 
@@ -149,29 +105,16 @@ void setup() {
   while (!Serial) ;
 
   //On vérifie que les capteurs on été correctement connectée.
-  if (!gyroscope.begin(GYRO_RANGE_250DPS)) {
+  gyro.setRange(
+  if (!gyro.begin(GYRO_RANGE_500DPS)) {
     while(true){}
   }
-  if (!accelerometre.begin()) {
+  if (!accel.begin(ADXL345_RANGE_2G)) {
     while(true){}
   }
-
-#ifdef USE_COMPASS
-  if (!compass.begin()) {
+  if (!mag.begin(HMC5883_MAGGAIN_1_3)) {
     while(true){}
   }
-#endif
-
-  //définition des echelles des capteurs
-  buzzer(1);
-  calibrate_gyroscope(300);
-  buzzer(2);
-  
-#ifdef USE_COMPASS
-  compass.setMagGain(HMC5883_MAGGAIN_1_9);
-  calibrate_compass(60);
-  buzzer(3);
-#endif
 
   for (indice = 0; indice < 60; indice++) {
     delay(10);
@@ -188,12 +131,6 @@ void setup() {
     }
   }
 
-  
-  buzzer(3);
-  roll_angle = 0;
-  pitch_angle = 0;
-  yaw_angle = 0;
-
   //NEW CODE
   Motor MotorAVG = new Motor(PIN_ESC_AVG, MICROS_LOW, MICROS_HIGH);
   Motor MotorAVD = new Motor(PIN_ESC_AVD, MICROS_LOW, MICROS_HIGH);
@@ -207,20 +144,39 @@ void setup() {
 
 void loop() {
 
-  if (debug == 0) {
-    roll_angle = 0;
-    pitch_angle = 0;
-    yaw_angle = 0;
-    roll_g = 0;
-    pitch_g = 0;
-    yaw_g = 0;
-    debug++;
-    for (indice = 0; indice < 60; indice++) {
-      delay(10);
-      gyroscope.getEvent(&val_gyro);
-    } //flush old datas of the gyroscope
-  }
+	sensors_event_t gyro_event;
+	sensors_event_t accel_event;
+	sensors_event_t mag_event;
+	
+	if(micros() - microsPrevious >= tSample){
+		gyro.getEvent(&gyro_event);
+		accel.getEvent(&accel_event);
+		mag.getEvent(&mag_event);
+		
+		// Apply mag offset compensation (base values in uTesla)
+		float x = mag_event.magnetic.x - mag_offsets[0];
+		float y = mag_event.magnetic.y - mag_offsets[1];
+		float z = mag_event.magnetic.z - mag_offsets[2];
 
+		// Apply mag soft iron error compensation
+		float mx = x * mag_softiron_matrix[0][0] + y * mag_softiron_matrix[0][1] + z * mag_softiron_matrix[0][2];
+		float my = x * mag_softiron_matrix[1][0] + y * mag_softiron_matrix[1][1] + z * mag_softiron_matrix[1][2];
+		float mz = x * mag_softiron_matrix[2][0] + y * mag_softiron_matrix[2][1] + z * mag_softiron_matrix[2][2];
+
+		// The filter library expects gyro data in degrees/s, but adafruit sensor
+		// uses rad/s so we need to convert them first (or adapt the filter lib
+		// where they are being converted)
+		float gx = gyro_event.gyro.x * 57.2958F;
+		float gy = gyro_event.gyro.y * 57.2958F;
+		float gz = gyro_event.gyro.z * 57.2958F;
+		
+		filter.update(gx, gy, gz, ax, ay, az, mx, my, mz);
+		
+		roll = filter.getRoll();
+		pitch = filter.getPitch();
+		yaw = filter.getYaw();
+	}
+	
   receiver_to_value();
   
   if (value_throttle < 1100) {

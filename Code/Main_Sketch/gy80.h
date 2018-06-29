@@ -18,7 +18,7 @@ class Accelerometer{
 	
 }
 
-class Compass {
+class Magnetometer {
 	public:
 	Compass();
 	void Calibrate();
@@ -26,5 +26,19 @@ class Compass {
 	Adafruit_HMC5883_Unified chip;// = Adafruit_HMC5883_Unified(3);
 
 }
+
+class GY80 {
+	private:
+	Magnetometer mag;
+	Accelerometer accel;
+	Gyroscope gyro;
+	
+	public:
+	GY80();
+	bool begin();
+}
+
+typedef struct {
+	
 
 #endif
