@@ -63,18 +63,20 @@ void Receiver::timingYaw() {
     timeYaw = micros() - tmpTimeYaw;
 }
 
-int Receiver::getRoll(){
-	return this.timeRoll;
+void Receiver::stop(){
+	disablePCINT(digitalPinToPinChangeInterrupt(pinRoll));
+	disablePCINT(digitalPinToPinChangeInterrupt(pinPitch));
+	disablePCINT(digitalPinToPinChangeInterrupt(pinThrottle));
+	disablePCINT(digitalPinToPinChangeInterrupt(pinYaw));
 }
 
-int Receiver::getPitch(){
-	return this.timePitch;
-}
-
-int Receiver::getThrottle(){
-	return this.timeThrottle;
-}
-
-int Receiver::getYaw(){
-	return this.timeYaw;
+void Receiver::start(){
+	enablePCINT(digitalPinToPinChangeInterrupt(pinRoll));
+	enablePCINT(digitalPinToPinChangeInterrupt(pinPitch));
+	enablePCINT(digitalPinToPinChangeInterrupt(pinThrottle));
+	enablePCINT(digitalPinToPinChangeInterrupt(pinYaw));
+	
+	unsigned long time = millis();
+	
+	while(millis()-time < 3); //wait for 2 about 2 pulses so that our readings will be correct
 }

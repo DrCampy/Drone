@@ -8,10 +8,13 @@ class Receiver{
 	Receiver(int pinRoll, int pinPitch, int pinThrottle, int pinYaw);
 	//STOP Interrupts ?
 	
-	int getRoll();
-	int getPitch();
-	int getThrottle();
-	int getYaw();
+	int getRoll(){return this.timeRoll;}
+	int getPitch(){return this.timePitch;}
+	int getThrottle(){return this.timeThrottle;}
+	int getYaw(){return this.timeYaw;}
+	
+	void stop();
+	void start();
 	
 	private:
 	volatile int timeRoll, timePitch, timeThrottle, timeYaw;
