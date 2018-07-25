@@ -79,14 +79,15 @@ void setup() {
     delay(10);
     gyroscope.getEvent(&val_gyro);
   }
-  
+
+  //TODO
   //waiting for user to arm the drone
   unsigned int counter = 0;
   while(counter < 1700){
     counter ++;
     gyroscope.getEvent(&val_gyro);
     if(time_ch[N_YAW] > 1150 || time_ch[N_THROTTLE] > 1090){
-      counter = 0;  
+      counter = 0;
     }
   }
 
@@ -97,7 +98,6 @@ void setup() {
   Motor MotorARG = new Motor(PIN_ESC_ARG, MICROS_LOW, MICROS_HIGH);
 
   Receiver receiver(ROLL_PIN, PITCH_PIN, THROTTLE_PIN, YAW_PIN);
-
 }
 
 
@@ -106,12 +106,12 @@ void loop() {
 	sensors_event_t gyro_event;
 	sensors_event_t accel_event;
 	sensors_event_t mag_event;
-	
+
 	if(micros() - microsPrevious >= tSample){
 		gyro.getEvent(&gyro_event);
 		accel.getEvent(&accel_event);
 		mag.getEvent(&mag_event);
-		
+
 		// Apply mag offset compensation (base values in uTesla)
 		float x = mag_event.magnetic.x - mag_offsets[0];
 		float y = mag_event.magnetic.y - mag_offsets[1];
@@ -128,18 +128,18 @@ void loop() {
 		float gx = gyro_event.gyro.x * 57.2958F;
 		float gy = gyro_event.gyro.y * 57.2958F;
 		float gz = gyro_event.gyro.z * 57.2958F;
-		
+
 		filter.update(gx, gy, gz, ax, ay, az, mx, my, mz);
-		
+
 		roll = filter.getRoll();
 		pitch = filter.getPitch();
 		yaw = filter.getYaw();
-		
-		
+
+
 	}
-	
+
   receiver_to_value();
-  
+
   if (value_throttle < 1100) {
     stand_still();
   } else {
@@ -148,7 +148,7 @@ void loop() {
   pid();
   calculate_power();
   }
-  
+
   send_signal();
 }
 
@@ -276,5 +276,3 @@ void calibrate_compass(const float time_seconds) {
     cal.compass.scale.z = field / (max_z);*/
 }
 #endif
-
-
