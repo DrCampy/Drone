@@ -34,6 +34,7 @@
 
 #define PITCH_ANGLE_LIMIT 45 //Pitch will vary between -PITCH_ANGLE_LIMIT and PITCH_ANGLE_LIMIT
 #define ROLL_ANGLE_LIMIT 45 //Roll will vary between -ROLL_ANGLE_LIMIT and ROLL_ANGLE_LIMITS
+#define YAW_ROTATIONAL_SPEED 180 //in degrees per second
 #define K_THROTTLE 50 //Multiply throttle by this factor (limits total power to k*100%)
 
 //Variables
@@ -108,8 +109,8 @@ void loop() {
 	sensors_event_t accel_event;
 	sensors_event_t mag_event;
 
-  PID pid = PID(tSample, );
-  //PID(unsigned long tSample, float kPRoll, float kIRoll, float kDRoll, float kPPitch, float kIPitch, float kDPitch, float kPYaw, float kIYaw, float kDYaw);
+  PID pid = PID(tSample, 2, 1, 1, 2, 1, 1, 2, 1, 1); //PID(tSample, kPRoll, kIRoll, kDRoll, kPPitch, kIPitch, kDPitch, kPYaw, kIYaw, kDYaw);
+
 
 
   //Iterate every tSample seconds
@@ -138,16 +139,18 @@ void loop() {
 		AHRS_filter.update(gx, gy, gz, ax, ay, az, mx, my, mz);
 
     //Actual values of the position of the drone.
-		roll = AHRS_filter.getRoll();
-		pitch = AHRS_filter.getPitch();
-		yaw = AHRS_filter.getYaw();
+		float FilterRoll = AHRS_filter.getRoll();
+		float FilterPitch = AHRS_filter.getPitch();
+		float FilterYaw = AHRS_filter.getYaw();
 
-    //Asked values
+    //Asked values by user
     tRoll = receiver.getRoll();
     tPitch = receiver.getPitch();
     tYaw = receiver.getYaw(); //This is a rotational speed
     tThrottle = receiver.getThrottle();
 
+    //If throttle is too low we just let the motors turn at lowest speed
+    //We do no computation.
     if(tThrottle < 1100){
       stand_still();
       tFL = MICROS_RUNNING;
@@ -169,15 +172,21 @@ void loop() {
         aPitch = map_float(tPitch, 1490, MICROS_HIGH, 0, 25);
       else
         aPitch = 0; //deg
-
-
       }
 
+      if(tRoll < 1460)
+        yawSpeed =
 
-      if (value_throttle < 1100) {
-      } else {
-  gyroscope.getEvent(&val_gyro);
-  read_gy80();
+      //TODO adapt yaw.
+      /*
+       *actYaw is always 0 minus previous yaw error
+       *reqYaw is required yaw rotational speed * tSample
+       *
+       */
+
+      pid.update(float FilterRoll, float FilterPitch, float FilterYaw, float aRoll, float aPitch, float aYaw);
+
+
   pid();
   calculate_power();
   }
