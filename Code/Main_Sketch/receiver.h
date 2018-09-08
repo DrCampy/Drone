@@ -7,15 +7,15 @@ class Receiver{
 	public:
 	Receiver(int pinRoll, int pinPitch, int pinThrottle, int pinYaw);
 	//STOP Interrupts ?
-
+	
 	int getRoll(){return this.timeRoll;}
 	int getPitch(){return this.timePitch;}
-	int getYaw(){return this.timeYaw;}
 	int getThrottle(){return this.timeThrottle;}
-
+	int getYaw(){return this.timeYaw;}
+	
 	void stop();
 	void start();
-
+	
 	private:
 	volatile int timeRoll, timePitch, timeThrottle, timeYaw;
 	volatile int tmpTimeRoll, tmpTimePitch, tmpTimeThrottle, tmpTimeYaw;
@@ -23,9 +23,9 @@ class Receiver{
 	const int pinRoll, pinPitch, pinThrottle, pinYaw;
 	void timingRoll();
 	void timingPitch();
-	void timingYaw();
 	void timingThrottle();
-
+	void timingYaw();
+	
 }
 
 #endif RECEIVER_H
