@@ -18,11 +18,6 @@
 #define THROTTLE_PIN 11 //CH3
 #define YAW_PIN 10 //CH4
 
-#define N_ROLL 0
-#define N_PITCH 1
-#define N_THROTTLE 2
-#define N_YAW 3
-
 #define PIN_ESC_AVD A0
 #define PIN_ESC_AVG A3
 #define PIN_ESC_ARD A1
@@ -37,14 +32,29 @@
 #define MAG_I2C_ADDR 2
 #define GYRO_I2C_ADDR 3
 
+#define PITCH_ANGLE_LIMIT 45 //Pitch will vary between -PITCH_ANGLE_LIMIT and PITCH_ANGLE_LIMIT
+#define ROLL_ANGLE_LIMIT 45 //Roll will vary between -ROLL_ANGLE_LIMIT and ROLL_ANGLE_LIMITS
+#define YAW_ROTATIONAL_SPEED 180 //in degrees per second
+#define K_THROTTLE 50 //Multiply throttle by this factor (limits total power to k*100%)
+
 //Variables
 Adafruit_ADXL345_Unified accel(ACCEL_I2C_ADDR);
 Adafruit_HMC5883_Unified mag(MAG_I2C_ADDR);
 Adafruit_L3GD20_Unified gyro(GYRO_I2C_ADDR);
 
-float mx = 0.0F, my = 0.0F, mz = 0.0F;
-float ax = 0.0F, ay = 0.0F, az = 0.0F;
-float gx = 0.0F, gy = 0.0F, gz = 0.0F;
+//Sensors values
+float mx = 0.0F, my = 0.0F, mz = 0.0F; //magnetometer
+float ax = 0.0F, ay = 0.0F, az = 0.0F; //Accelerometer
+float gx = 0.0F, gy = 0.0F, gz = 0.0F; //Gyroscopic
+
+//RC values
+unsigned int tRoll = 0, tPitch = 0, tYaw = 0, tThrottle = 0;
+
+//desired values in angles
+unsigned int aRoll = 0, aPitch = 0, aYaw = 0;
+
+//times to send to each motor
+unsigned int tFL = 0, tFR = 0, tRR = 0, tRL = 0;
 
 // Offsets applied to raw x/y/z values
 float mag_offsets[3] = { -2.20F, -5.53F, -26.34F };
@@ -71,7 +81,7 @@ void setup() {
   if (!accel.begin(ADXL345_RANGE_2G)) {
     while(true){}
   }
-  if (!mag.begin(HMC5883_MAGGAIN_1_3)) {
+  if (!mags.begin(HMC5883_MAGGAIN_1_3)) {
     while(true){}
   }
 
@@ -80,6 +90,7 @@ void setup() {
     gyroscope.getEvent(&val_gyro);
   }
 
+<<<<<<< HEAD
   //TODO
   //waiting for user to arm the drone
   unsigned int counter = 0;
@@ -90,6 +101,9 @@ void setup() {
       counter = 0;
     }
   }
+=======
+  //waiting for user to arm the drone TODO
+>>>>>>> 79667f8fbf6520a1b96f0374545e2235f1675bd9
 
   //NEW CODE
   Motor MotorAVG = new Motor(PIN_ESC_AVG, MICROS_LOW, MICROS_HIGH);
@@ -107,6 +121,14 @@ void loop() {
 	sensors_event_t accel_event;
 	sensors_event_t mag_event;
 
+<<<<<<< HEAD
+=======
+  PID pid = PID(tSample, 2, 1, 1, 2, 1, 1, 2, 1, 1); //PID(tSample, kPRoll, kIRoll, kDRoll, kPPitch, kIPitch, kDPitch, kPYaw, kIYaw, kDYaw);
+
+
+
+  //Iterate every tSample seconds
+>>>>>>> 79667f8fbf6520a1b96f0374545e2235f1675bd9
 	if(micros() - microsPrevious >= tSample){
 		gyro.getEvent(&gyro_event);
 		accel.getEvent(&accel_event);
@@ -129,6 +151,7 @@ void loop() {
 		float gy = gyro_event.gyro.y * 57.2958F;
 		float gz = gyro_event.gyro.z * 57.2958F;
 
+<<<<<<< HEAD
 		filter.update(gx, gy, gz, ax, ay, az, mx, my, mz);
 
 		roll = filter.getRoll();
@@ -145,6 +168,59 @@ void loop() {
   } else {
   gyroscope.getEvent(&val_gyro);
   read_gy80();
+=======
+		AHRS_filter.update(gx, gy, gz, ax, ay, az, mx, my, mz);
+
+    //Actual values of the position of the drone.
+		float FilterRoll = AHRS_filter.getRoll();
+		float FilterPitch = AHRS_filter.getPitch();
+		float FilterYaw = AHRS_filter.getYaw();
+
+    //Asked values by user
+    tRoll = receiver.getRoll();
+    tPitch = receiver.getPitch();
+    tYaw = receiver.getYaw(); //This is a rotational speed
+    tThrottle = receiver.getThrottle();
+
+    //If throttle is too low we just let the motors turn at lowest speed
+    //We do no computation.
+    if(tThrottle < 1100){
+      stand_still();
+      tFL = MICROS_RUNNING;
+      tFR = MICROS_RUNNING;
+      tRR = MICROS_RUNNING;
+      tRL = MICROS_RUNNING;
+      pid.zeroI();
+    }else{
+      if (tRoll < 1460)
+        aRoll = map_float(tRoll, MICROS_LOW, 1460, -25, 0);
+      else if (tmp > 1490)
+        aRoll = map_float(tRoll, 1490, MICROS_HIGH, 0, 25);
+      else
+        aRoll = 0; //deg
+
+      if (tPitch < 1460)
+        aPitch = map_float(tPitch, MICROS_LOW, 1460, -25, 0);
+      else if (tPitch > 1490)
+        aPitch = map_float(tPitch, 1490, MICROS_HIGH, 0, 25);
+      else
+        aPitch = 0; //deg
+      }
+
+      if(tRoll < 1460)
+        yawSpeed =
+
+      //TODO adapt yaw.
+      /*
+       *actYaw is always 0 minus previous yaw error
+       *reqYaw is required yaw rotational speed * tSample
+       *
+       */
+
+      pid.update(float FilterRoll, float FilterPitch, float FilterYaw, float aRoll, float aPitch, float aYaw);
+
+
+>>>>>>> 79667f8fbf6520a1b96f0374545e2235f1675bd9
   pid();
   calculate_power();
   }
@@ -231,6 +307,7 @@ void calibrate_gyroscope(const int nbr_loop) {
   cal.gyro.drift.pitch = (float) gyro_sum_pitch / nbr_loop;
   cal.gyro.drift.yaw = (float) gyro_sum_yaw / nbr_loop;
 }
+<<<<<<< HEAD
 
 
 #ifdef USE_COMPASS
@@ -276,3 +353,5 @@ void calibrate_compass(const float time_seconds) {
     cal.compass.scale.z = field / (max_z);*/
 }
 #endif
+=======
+>>>>>>> 79667f8fbf6520a1b96f0374545e2235f1675bd9

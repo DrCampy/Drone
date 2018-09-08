@@ -8,7 +8,7 @@ class PID{
 	const float kPYaw, kIYaw, kDYaw;
 
 	const unsigned long tSample; //in microseconds
-	
+
 	float prevErrorRoll, prevErrorPitch, prevErrorYaw;
 	float IRoll, IPitch, IYaw;
 
@@ -21,6 +21,11 @@ class PID{
 	void getRollVal(){return rollSum;}
 	void getPitchVal(){return pitchSum;}
 	void getYawVal(){return yawSum;}
+<<<<<<< HEAD
+=======
+	void zeroI(){IRoll = 0; IPitch = 0; IYaw = 0;}
+
+>>>>>>> 79667f8fbf6520a1b96f0374545e2235f1675bd9
 
 }
 
